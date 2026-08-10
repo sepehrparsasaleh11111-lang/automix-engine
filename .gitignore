@@ -1,0 +1,21 @@
+# Rust
+target/
+**/target/
+
+# Node
+node_modules/
+frontend/dist/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Tauri
+src-tauri/target/
+openmix-app/gen/
+
+# Local env
+.env
+.env.local
