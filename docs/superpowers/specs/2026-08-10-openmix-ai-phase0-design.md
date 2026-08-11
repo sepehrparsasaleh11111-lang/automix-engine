@@ -24,7 +24,7 @@ No application code.
 | Key detection | KeyFinder C++ via bindings, behind replaceable `KeyDetector` trait; Krumhansl-Schmuckler chroma as fallback/future second algorithm with confidence comparison |
 | Time-stretch/resample | `rubato` (pure Rust), behind replaceable trait |
 | Audio decoding | `symphonia` (MP3/WAV/FLAC, streaming, chunked) |
-| Storage | SQLite via `rusqlite` (bundled), behind a storage module |
+| Storage | SQLite via `rusqlite` (bundled) in `openmix-app`; core engine never persists |
 | Concurrency | tokio (IPC/async glue) + rayon (analysis parallelism) |
 | Frontend | Vite + React + TypeScript + Tailwind, Zustand state, `<canvas>` waveforms, Tauri IPC + dialog/fs plugins |
 | Dev platform | macOS first; Windows via CI + cross-platform-safe code |

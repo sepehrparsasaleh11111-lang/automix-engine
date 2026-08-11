@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    name: Rust core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Jobs are gated on the manifest existing so the workflow is live at
+      # Gate 0 (planning docs only) and activates when Phase 1 lands.
+      - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
+        run: cargo fmt --all --check
+
+      - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
+        run: cargo test --workspace
+
+      # Native-analysis feature isolation: prove the fallback build compiles.
+      - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
+        run: cargo check --workspace --no-default-features
+
+  frontend:
+    name: Frontend (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: pnpm install --frozen-lockfile
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: pnpm lint
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: pnpm test
+
+      - if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: pnpm build
