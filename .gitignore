@@ -19,3 +19,9 @@ openmix-app/gen/
 # Local env
 .env
 .env.local
+# Frontend build artifacts
+frontend/*.tsbuildinfo
+frontend/.vite/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
