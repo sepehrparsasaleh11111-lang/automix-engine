@@ -58,15 +58,19 @@ jobs:
 
       - if: ${{ hashFiles('frontend/package.json') != '' }}
         run: pnpm install --frozen-lockfile
+        working-directory: frontend
 
       - if: ${{ hashFiles('frontend/package.json') != '' }}
         run: pnpm lint
+        working-directory: frontend
 
       - if: ${{ hashFiles('frontend/package.json') != '' }}
         run: pnpm test
+        working-directory: frontend
 
       - if: ${{ hashFiles('frontend/package.json') != '' }}
         run: pnpm build
+        working-directory: frontend
 
   e2e:
     name: E2E (mocked IPC)
