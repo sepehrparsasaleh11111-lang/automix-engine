@@ -1,3 +1,5 @@
+pub mod storage;
+
 #[tauri::command]
 fn ping() -> String {
     "pong".to_string()
