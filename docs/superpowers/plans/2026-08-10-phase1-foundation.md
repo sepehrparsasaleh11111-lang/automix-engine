@@ -1304,7 +1304,7 @@ git commit -m "feat: import pipeline with streamed sha-256 hashing and IPC comma
 - Consumes: Task 7 command names and `TrackSummary`/`Project` shapes.
 - Produces: `src/types.ts` (TS mirrors of `Project`, `TrackSummary`, `Peak`); `src/api/ipc.ts` (`listProjects()`, `createProject(name)`, `deleteProject(id)`, `listTracks(projectId)`, `importTracks(paths, projectId)`); Zustand stores `useProjectsStore` (`projects`, `load()`, `create(name)`, `remove(id)`, `selectedId`, `select(id)`) and `useTracksStore` (`tracks`, `load(projectId)`, `addFromPaths(paths, projectId)`).
 
-- [ ] **Step 1: Write the failing store test** (`frontend/src/store/projects.test.ts`)
+- [x] **Step 1: Write the failing store test** (`frontend/src/store/projects.test.ts`)
 
 ```ts
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -1338,12 +1338,12 @@ describe('useProjectsStore', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm --dir frontend test`
 Expected: FAIL — module `./projects` missing.
 
-- [ ] **Step 3: Write `frontend/src/types.ts`**
+- [x] **Step 3: Write `frontend/src/types.ts`**
 
 ```ts
 export interface Peak { min: number; max: number }
@@ -1354,7 +1354,7 @@ export interface TrackSummary {
 }
 ```
 
-- [ ] **Step 4: Write `frontend/src/api/ipc.ts`**
+- [x] **Step 4: Write `frontend/src/api/ipc.ts`**
 
 ```ts
 import { invoke } from '@tauri-apps/api/core';
@@ -1371,14 +1371,14 @@ export const importTracks = (paths: string[], projectId: string | null) =>
 
 (Note: Tauri converts camelCase JS args to snake_case Rust params automatically; `projectId` ↔ `project_id`.)
 
-- [ ] **Step 5: Write `frontend/src/store/projects.ts` and `frontend/src/store/tracks.ts`** (zustand; `create` appends server result, `remove` filters, `load` fetches; tracks store `addFromPaths` calls `importTracks` and appends results).
+- [x] **Step 5: Write `frontend/src/store/projects.ts` and `frontend/src/store/tracks.ts`** (zustand; `create` appends server result, `remove` filters, `load` fetches; tracks store `addFromPaths` calls `importTracks` and appends results).
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `pnpm --dir frontend test`
 Expected: PASS.
 
-- [ ] **Step 7: Write the failing Home test** (`frontend/src/pages/Home.test.tsx`)
+- [x] **Step 7: Write the failing Home test** (`frontend/src/pages/Home.test.tsx`)
 
 ```tsx
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -1442,26 +1442,26 @@ describe('Home', () => {
 });
 ```
 
-- [ ] **Step 8: Run test to verify it fails**
+- [x] **Step 8: Run test to verify it fails**
 
 Run: `pnpm --dir frontend test`
 Expected: FAIL — `Home` not found.
 
-- [ ] **Step 9: Write `frontend/src/pages/Home.tsx`**
+- [x] **Step 9: Write `frontend/src/pages/Home.tsx`**
 
 Layout: header "OpenMix AI"; left column = project list (create input + button, delete per row, click to select); right column = tracks pane: "Import" button → `open({ multiple: true, filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'flac'] }] })` → `addFromPaths`; track list rows (title, artist, duration). Select first project on load and `load()` tracks via `useEffect`. Tailwind for minimal styling.
 
-- [ ] **Step 10: Run test to verify it passes**
+- [x] **Step 10: Run test to verify it passes**
 
 Run: `pnpm --dir frontend test`
 Expected: PASS (3 tests).
 
-- [ ] **Step 11: Verify build + lint**
+- [x] **Step 11: Verify build + lint**
 
 Run: `pnpm --dir frontend build && pnpm --dir frontend lint`
 Expected: green.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```sh
 git add frontend/src/
