@@ -9,8 +9,9 @@ storage, no paid APIs, no accounts.
 
 ## Status
 
-**Phase 0 — Planning.** Architecture and technical planning are complete;
-application code begins at Phase 1.
+**Phase 1 complete — Foundation.** The app imports MP3 / WAV / FLAC with
+streamed analysis, renders waveform peaks, and manages projects/tracks in a
+local SQLite database. Phase 2 (BPM / beat-grid / key analysis) is next.
 
 ## Features (planned)
 

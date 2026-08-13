@@ -1481,7 +1481,7 @@ git commit -m "feat: home screen with project CRUD and track import"
 **Interfaces:**
 - Produces: `drawPeaks(ctx: CanvasRenderingContext2D, peaks: Peak[], width: number, height: number, color: string)` — pure, testable with a stub context; `WaveformCanvas({ peaks, className })` — canvas element, `useEffect` redraw on peaks change, `devicePixelRatio` scaling; `TrackCard({ track })` — renders title/artist/duration/format + waveform.
 
-- [ ] **Step 1: Write the failing drawPeaks test**
+- [x] **Step 1: Write the failing drawPeaks test**
 
 ```ts
 import { describe, expect, it, vi } from 'vitest';
@@ -1519,12 +1519,12 @@ describe('drawPeaks', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm --dir frontend test`
 Expected: FAIL — `drawPeaks` not found.
 
-- [ ] **Step 3: Write `frontend/src/components/waveform/drawPeaks.ts`**
+- [x] **Step 3: Write `frontend/src/components/waveform/drawPeaks.ts`**
 
 ```ts
 import type { Peak } from '../../types';
@@ -1553,12 +1553,12 @@ export function drawPeaks(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --dir frontend test`
 Expected: PASS.
 
-- [ ] **Step 5: Write the failing TrackCard test**
+- [x] **Step 5: Write the failing TrackCard test**
 
 ```tsx
 import { describe, expect, it } from 'vitest';
@@ -1583,18 +1583,18 @@ describe('TrackCard', () => {
 });
 ```
 
-- [ ] **Step 6: Run test to verify it fails**
+- [x] **Step 6: Run test to verify it fails**
 
 Run: `pnpm --dir frontend test`
 Expected: FAIL — `TrackCard` not found.
 
-- [ ] **Step 7: Implement `TrackCard.tsx`** (title, artist fallback "Unknown artist", `formatDuration(ms)` → `m:ss`, format badge) and `WaveformCanvas.tsx` (canvas with `data-testid="waveform"`, redraw via `drawPeaks`, scaled by `devicePixelRatio`).
+- [x] **Step 7: Implement `TrackCard.tsx`** (title, artist fallback "Unknown artist", `formatDuration(ms)` → `m:ss`, format badge) and `WaveformCanvas.tsx` (canvas with `data-testid="waveform"`, redraw via `drawPeaks`, scaled by `devicePixelRatio`).
 
-- [ ] **Step 8: Run test to verify it passes** — `pnpm --dir frontend test` → PASS.
+- [x] **Step 8: Run test to verify it passes** — `pnpm --dir frontend test` → PASS.
 
-- [ ] **Step 9: Wire into `Home.tsx`** — replace the plain track row with `<TrackCard>` including `<WaveformCanvas peaks={track.peaks} />`.
+- [x] **Step 9: Wire into `Home.tsx`** — replace the plain track row with `<TrackCard>` including `<WaveformCanvas peaks={track.peaks} />`.
 
-- [ ] **Step 10: Quality gates + commit**
+- [x] **Step 10: Quality gates + commit**
 
 Run: `pnpm --dir frontend test && pnpm --dir frontend lint && pnpm --dir frontend build`
 Expected: green.
@@ -1614,7 +1614,7 @@ git commit -m "feat: canvas waveform and track cards"
 
 **Interfaces:** n/a — integration task.
 
-- [ ] **Step 1: Write `frontend/src/e2e/mocks.ts`** — installs `mockIPC` handler backed by in-memory fake data:
+- [x] **Step 1: Write `frontend/src/e2e/mocks.ts`** — installs `mockIPC` handler backed by in-memory fake data:
 
 ```ts
 import { mockIPC } from '@tauri-apps/api/mocks';
@@ -1644,9 +1644,9 @@ export function installMocks() {
 }
 ```
 
-- [ ] **Step 2: Modify `frontend/src/main.tsx`** — before rendering: `if (import.meta.env.VITE_E2E === 'true') { const { installMocks } = await import('./e2e/mocks'); installMocks(); }`
+- [x] **Step 2: Modify `frontend/src/main.tsx`** — before rendering: `if (import.meta.env.VITE_E2E === 'true') { const { installMocks } = await import('./e2e/mocks'); installMocks(); }`
 
-- [ ] **Step 3: Write `frontend/playwright.config.ts`**
+- [x] **Step 3: Write `frontend/playwright.config.ts`**
 
 ```ts
 import { defineConfig } from '@playwright/test';
@@ -1665,7 +1665,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Write `frontend/e2e/home.spec.ts`**
+- [x] **Step 4: Write `frontend/e2e/home.spec.ts`**
 
 ```ts
 import { expect, test } from '@playwright/test';
@@ -1685,12 +1685,12 @@ test('import shows a track with waveform', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 5: Run E2E locally**
+- [x] **Step 5: Run E2E locally**
 
 Run: `pnpm --dir frontend exec playwright install chromium && pnpm --dir frontend e2e`
 Expected: 2 passing tests.
 
-- [ ] **Step 6: Add CI e2e job to `.github/workflows/ci.yml`**
+- [x] **Step 6: Add CI e2e job to `.github/workflows/ci.yml`**
 
 ```yaml
   e2e:
@@ -1711,18 +1711,18 @@ Expected: 2 passing tests.
         working-directory: frontend
 ```
 
-- [ ] **Step 7: Update `.gitignore`** — add `frontend/.vite/`, `frontend/coverage/`, `frontend/playwright-report/`, `frontend/test-results/`.
+- [x] **Step 7: Update `.gitignore`** — add `frontend/.vite/`, `frontend/coverage/`, `frontend/playwright-report/`, `frontend/test-results/`.
 
-- [ ] **Step 8: Update docs** — `README.md`: status → "Phase 1 complete — foundation: imports MP3/WAV/FLAC, waveforms, project management (local SQLite)"; `docs/build-guide.md`: pnpm install via `npm install -g pnpm@9`, Tauri CLI via `@tauri-apps/cli` devDependency (`pnpm exec tauri dev`), E2E section (mocked-IPC Playwright; note `tauri-driver` is Windows/Linux-only, real-webview E2E lands in Phase 5).
+- [x] **Step 8: Update docs** — `README.md`: status → "Phase 1 complete — foundation: imports MP3/WAV/FLAC, waveforms, project management (local SQLite)"; `docs/build-guide.md`: pnpm install via `npm install -g pnpm@9`, Tauri CLI via `@tauri-apps/cli` devDependency (`pnpm exec tauri dev`), E2E section (mocked-IPC Playwright; note `tauri-driver` is Windows/Linux-only, real-webview E2E lands in Phase 5).
 
-- [ ] **Step 9: Full verification**
+- [x] **Step 9: Full verification**
 
 Run (repo root):
 `cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && cargo check --workspace --no-default-features`
 `pnpm --dir frontend lint && pnpm --dir frontend test && pnpm --dir frontend build && pnpm --dir frontend e2e`
 Expected: all green.
 
-- [ ] **Step 10: Manual smoke test (Gate 1 checklist)** — `pnpm exec tauri dev`:
+- [x] **Step 10: Manual smoke test (Gate 1 checklist)** — `pnpm exec tauri dev`:
   1. Window opens titled "OpenMix AI"
   2. Create project "Test Mix" → appears in list; restart app → persists
   3. Import a real MP3, WAV, and FLAC via dialog → all show title/artist/duration + waveform
@@ -1730,7 +1730,7 @@ Expected: all green.
   5. Quit; relaunch; data intact
   Record results in the Gate 1 report.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```sh
 git add frontend/ .github/ .gitignore README.md docs/build-guide.md
@@ -1738,7 +1738,7 @@ git commit -m "feat: e2e with mocked IPC, ci e2e job, docs for phase 1"
 git push
 ```
 
-- [ ] **Step 12: Gate 1 review** — report results (all tests, smoke checklist, memory note: decode is chunked; peaks bounded at 2000 points). **Stop and wait for user review before Phase 2.**
+- [x] **Step 12: Gate 1 review** — report results (all tests, smoke checklist, memory note: decode is chunked; peaks bounded at 2000 points). **Stop and wait for user review before Phase 2.**
 
 ---
 

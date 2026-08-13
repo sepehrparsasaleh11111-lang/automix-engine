@@ -20,11 +20,11 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # 2. Xcode Command Line Tools (already present if you have Xcode)
 xcode-select --install
 
-# 3. Tauri CLI (via cargo)
-cargo install tauri-cli --version "^2"
+# 3. Tauri CLI (npm devDependency in frontend — no global install)
+#    Installed automatically by `pnpm install` via `@tauri-apps/cli`
 
 # 4. Node + pnpm (Node 22 already installed here)
-npm install -g pnpm
+npm install -g pnpm@9
 
 # 5. C dependencies (aubio, KeyFinder) — built via CMake by Rust build scripts;
 #    needs `cmake` and a C++ compiler (comes with Xcode CLT)
@@ -43,8 +43,8 @@ winget install Rustlang.Rustup
 # 4. Node.js LTS 22
 winget install OpenJS.NodeJS.LTS
 
-# 5. Tauri CLI
-cargo install tauri-cli --version "^2"
+# 5. Tauri CLI (npm devDependency in frontend — no global install)
+#    Installed automatically by `pnpm install` via `@tauri-apps/cli`
 
 # 6. WiX v3 (bundled automatically by Tauri for .msi) — .exe via NSIS: see Tauri docs
 ```
@@ -56,7 +56,9 @@ cargo install tauri-cli --version "^2"
 pnpm install --dir frontend
 
 # Run the app (dev mode: Vite HMR + cargo run)
-cargo tauri dev
+# The Tauri CLI must run from openmix-app/ (where tauri.conf.json lives);
+# the binary comes from the frontend node_modules.
+cd openmix-app && ../frontend/node_modules/.bin/tauri dev
 
 # Headless engine work (analysis/render) without GUI:
 cargo test --workspace            # all Rust tests
@@ -69,25 +71,41 @@ cargo test -p openmix-core        # engine tests only
 pnpm --dir frontend dev           # Vite dev server (UI without backend features)
 ```
 
+### End-to-end tests (mocked IPC)
+
+Phase 1 uses Playwright against the Vite dev server with Tauri's `mockIPC`
+(mocks all Rust commands with in-memory data). This runs in a normal browser,
+so it works on every OS. Real-webview E2E via `tauri-driver` is
+Windows/Linux-only (no macOS support) and lands in Phase 5.
+
+```sh
+pnpm --dir frontend exec playwright install chromium   # one-time
+pnpm --dir frontend e2e                                # 2 tests, VITE_E2E=true
+```
+
+> CI runs the same suite on Ubuntu (`pnpm e2e`), including the browser install.
+
 ## Quality gates (run before every commit / PR)
 
 ```sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
+cargo check --workspace --no-default-features   # native-analysis feature isolation
 pnpm --dir frontend lint
 pnpm --dir frontend test          # Vitest
 pnpm --dir frontend build         # production frontend build
+pnpm --dir frontend e2e           # Playwright (mocked IPC)
 ```
 
 ## Packaging
 
 ```sh
-# macOS → .dmg  (Apple Silicon + Intel via universal builds in CI)
-cargo tauri build
+# From openmix-app/ (cd openmix-app first)
+../frontend/node_modules/.bin/tauri build
 
+# macOS → .dmg  (Apple Silicon + Intel via universal builds in CI)
 # Windows → .exe (NSIS installer)
-cargo tauri build
 
 # CI does both OSes; local packaging on Windows requires Windows runner
 ```
