@@ -34,7 +34,7 @@ fn write_sine_wav(path: &std::path::Path) -> std::io::Result<()> {
 #[test]
 fn wav_decode_reports_correct_duration() -> Result<(), AppError> {
     let dir = std::env::temp_dir();
-    let path = dir.join("openmix_sine_1s.wav");
+    let path = dir.join("openmix_sine_duration.wav");
     write_sine_wav(&path).unwrap();
     let stream = DecodedStream::open(&path)?;
     assert_eq!(stream.sample_rate(), 44100);
@@ -46,7 +46,7 @@ fn wav_decode_reports_correct_duration() -> Result<(), AppError> {
 #[test]
 fn wav_chunks_sum_to_full_length() -> Result<(), AppError> {
     let dir = std::env::temp_dir();
-    let path = dir.join("openmix_sine_1s.wav");
+    let path = dir.join("openmix_sine_chunks.wav");
     write_sine_wav(&path).unwrap();
     let mut stream = DecodedStream::open(&path)?;
     let mut frames = 0usize;
@@ -62,7 +62,7 @@ fn wav_chunks_sum_to_full_length() -> Result<(), AppError> {
 #[test]
 fn peaks_are_min_max_decimated() -> Result<(), AppError> {
     let dir = std::env::temp_dir();
-    let path = dir.join("openmix_sine_1s.wav");
+    let path = dir.join("openmix_sine_peaks.wav");
     write_sine_wav(&path).unwrap();
     let mut stream = DecodedStream::open(&path)?;
     let peaks = compute_peaks(&mut stream, 100)?;
