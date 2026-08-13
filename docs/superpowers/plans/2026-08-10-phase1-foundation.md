@@ -911,7 +911,7 @@ git commit -m "feat: chunked audio decode (symphonia) and waveform peaks with fi
   - `#[derive(Debug, thiserror::Error)] pub enum StorageError` (rusqlite + io variants)
   - Storage stamps `created_at`/`updated_at` on insert (ISO-8601-like via `SystemTime`).
 
-- [ ] **Step 1: Write the failing test** (`openmix-app/tests/storage_test.rs`)
+- [x] **Step 1: Write the failing test** (`openmix-app/tests/storage_test.rs`)
 
 ```rust
 use openmix_app::storage::{Storage, Track};
@@ -978,14 +978,14 @@ fn migrations_are_idempotent() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cargo test -p openmix-app --test storage_test`
 Expected: FAIL — module `storage` not found.
 
-- [ ] **Step 3: Add deps to `openmix-app/Cargo.toml`** — `rusqlite = { version = "0.32", features = ["bundled"] }`, `uuid = { workspace = true }`, and `[dev-dependencies] tempfile = "3"`.
+- [x] **Step 3: Add deps to `openmix-app/Cargo.toml`** — `rusqlite = { version = "0.32", features = ["bundled"] }`, `uuid = { workspace = true }`, and `[dev-dependencies] tempfile = "3"`.
 
-- [ ] **Step 4: Write `openmix-app/src/storage/schema.sql`**
+- [x] **Step 4: Write `openmix-app/src/storage/schema.sql`**
 
 ```sql
 PRAGMA journal_mode = WAL;
@@ -1019,16 +1019,16 @@ CREATE TABLE IF NOT EXISTS preferences (
 );
 ```
 
-- [ ] **Step 5: Write `openmix-app/src/storage/db.rs`** — `pub fn init(conn: &rusqlite::Connection) -> rusqlite::Result<()>` executing `include_str!("schema.sql")` via `conn.execute_batch`.
+- [x] **Step 5: Write `openmix-app/src/storage/db.rs`** — `pub fn init(conn: &rusqlite::Connection) -> rusqlite::Result<()>` executing `include_str!("schema.sql")` via `conn.execute_batch`.
 
-- [ ] **Step 6: Write `openmix-app/src/storage/mod.rs`** implementing `StorageError`, `Project`, `Track` (derive `Serialize`/`Deserialize` on both), `Storage` (fields above) with all methods. Implementation notes: peaks stored as `serde_json::to_string(&t.peaks)`; rows read back with `serde_json::from_str`. `open_in_memory` uses `Connection::open_in_memory`. `open` uses `Connection::open(path)` + `db::init`. `created_at`/`updated_at` stamped on create/insert; `delete_project` cascades via FK.
+- [x] **Step 6: Write `openmix-app/src/storage/mod.rs`** implementing `StorageError`, `Project`, `Track` (derive `Serialize`/`Deserialize` on both), `Storage` (fields above) with all methods. Implementation notes: peaks stored as `serde_json::to_string(&t.peaks)`; rows read back with `serde_json::from_str`. `open_in_memory` uses `Connection::open_in_memory`. `open` uses `Connection::open(path)` + `db::init`. `created_at`/`updated_at` stamped on create/insert; `delete_project` cascades via FK.
 
-- [ ] **Step 7: Run tests to verify they pass**
+- [x] **Step 7: Run tests to verify they pass**
 
 Run: `cargo test -p openmix-app --test storage_test`
 Expected: PASS (4 tests).
 
-- [ ] **Step 8: Quality gates + commit**
+- [x] **Step 8: Quality gates + commit**
 
 Run: `cargo fmt --all --check && cargo clippy -p openmix-app --all-targets -- -D warnings`
 Expected: green.
@@ -1056,7 +1056,7 @@ git commit -m "feat: sqlite storage module (projects, tracks, preferences) with 
 - Tauri commands: `list_projects() -> Vec<Project>`, `create_project(name: String) -> Project`, `delete_project(id: String)`, `list_tracks(project_id: Option<String>) -> Vec<TrackSummary>`, `import_tracks(paths: Vec<String>, project_id: Option<String>) -> Vec<TrackSummary>` (all `Result<_, String>`).
 - `pub struct AppState { pub storage: Mutex<Storage> }` managed in lib.rs; DB path resolved from `app.path().app_data_dir()` in `setup`; storage opened at startup.
 
-- [ ] **Step 1: Write the failing integration test** (`openmix-app/tests/import_test.rs`)
+- [x] **Step 1: Write the failing integration test** (`openmix-app/tests/import_test.rs`)
 
 ```rust
 use openmix_app::import::import_file;
@@ -1130,12 +1130,12 @@ fn import_unsupported_format_errors() {
 const SINE_WAV_BYTES: &[u8] = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../openmix-core/tests/fixtures/sine1k_1s.wav"));
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cargo test -p openmix-app --test import_test`
 Expected: FAIL — module `import` not found.
 
-- [ ] **Step 3: Write `openmix-app/src/import.rs`** — streaming hash, bounded buffer:
+- [x] **Step 3: Write `openmix-app/src/import.rs`** — streaming hash, bounded buffer:
 
 ```rust
 use std::io::Read;
@@ -1266,20 +1266,20 @@ mod tests {
 }
 ```
 
-- [ ] **Step 4: Run unit tests** — `cargo test -p openmix-app --lib` — Expected: PASS (3 unit tests).
+- [x] **Step 4: Run unit tests** — `cargo test -p openmix-app --lib` — Expected: PASS (3 unit tests).
 
-- [ ] **Step 5: Run integration test to verify it passes**
+- [x] **Step 5: Run integration test to verify it passes**
 
 Run: `cargo test -p openmix-app --test import_test`
 Expected: PASS (4 tests: persistence, known digest, tamper, unsupported).
 
-- [ ] **Step 6: Write command modules** — `openmix-app/src/commands/mod.rs` (`pub mod projects; pub mod tracks;`), `commands/projects.rs` with `list_projects`/`create_project`/`delete_project`, `commands/tracks.rs` with `list_tracks`/`import_tracks`, all delegating to storage/import via `State<'_, AppState>`.
+- [x] **Step 6: Write command modules** — `openmix-app/src/commands/mod.rs` (`pub mod projects; pub mod tracks;`), `commands/projects.rs` with `list_projects`/`create_project`/`delete_project`, `commands/tracks.rs` with `list_tracks`/`import_tracks`, all delegating to storage/import via `State<'_, AppState>`.
 
-- [ ] **Step 7: Update `openmix-app/src/lib.rs`** — `mod storage; mod import; mod commands;`; `pub struct AppState { pub storage: Mutex<crate::storage::Storage> }`; in `run()`: open storage in `setup` from `app.path().app_data_dir()` (`std::fs::create_dir_all` the dir, then `Storage::open`), `manage(AppState { storage: Mutex::new(storage) })`, register all five commands; add `sha2 = "0.10"` and `uuid = { workspace = true }` to `openmix-app/Cargo.toml`.
+- [x] **Step 7: Update `openmix-app/src/lib.rs`** — `mod storage; mod import; mod commands;`; `pub struct AppState { pub storage: Mutex<crate::storage::Storage> }`; in `run()`: open storage in `setup` from `app.path().app_data_dir()` (`std::fs::create_dir_all` the dir, then `Storage::open`), `manage(AppState { storage: Mutex::new(storage) })`, register all five commands; add `sha2 = "0.10"` and `uuid = { workspace = true }` to `openmix-app/Cargo.toml`.
 
-- [ ] **Step 8: Verify** — `cargo test -p openmix-app` (lib + integration: all pass) and `cargo build -p openmix-app` compiles.
+- [x] **Step 8: Verify** — `cargo test -p openmix-app` (lib + integration: all pass) and `cargo build -p openmix-app` compiles.
 
-- [ ] **Step 9: Quality gates + commit**
+- [x] **Step 9: Quality gates + commit**
 
 Run: `cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings`
 Expected: green.
