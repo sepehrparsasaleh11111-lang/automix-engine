@@ -18,7 +18,12 @@ export function WaveformCanvas({ peaks, className }: WaveformCanvasProps) {
     const height = canvas.clientHeight;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
-    const ctx = canvas.getContext('2d');
+    let ctx: CanvasRenderingContext2D | null = null;
+    try {
+      ctx = canvas.getContext('2d');
+    } catch {
+      return;
+    }
     if (!ctx) return;
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, width, height);
