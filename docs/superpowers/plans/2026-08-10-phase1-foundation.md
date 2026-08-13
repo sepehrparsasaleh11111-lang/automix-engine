@@ -512,7 +512,7 @@ git commit -m "feat: tauri 2 shell with ping command and icons"
   - `pub struct DecodedStream` with `pub fn open(path: impl AsRef<Path>) -> Result<Self, AppError>`, `pub fn next_chunk(&mut self, frames: usize) -> Result<Option<AudioChunk>, AppError>`, `pub fn sample_rate(&self) -> u32`, `pub fn channels(&self) -> u16`, `pub fn duration(&self) -> Duration`, `pub fn metadata(&self) -> &TrackMeta` — chunked iterator over a symphonia decoder, never materializing whole file.
   - `pub struct Peak { pub min: f32, pub max: f32 }` and `pub fn compute_peaks(stream: &mut DecodedStream, points: usize) -> Result<Vec<Peak>, AppError>` — min/max decimation; `Vec::with_capacity(points)`; chunked consumption.
 
-- [ ] **Step 1: Write the failing integration test** (`openmix-core/tests/audio_test.rs`)
+- [x] **Step 1: Write the failing integration test** (`openmix-core/tests/audio_test.rs`)
 
 ```rust
 use openmix_core::audio::{compute_peaks, DecodedStream};
@@ -608,12 +608,12 @@ fn flac_and_mp3_fixtures_decode() -> Result<(), AppError> {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cargo test -p openmix-core --test audio_test`
 Expected: FAIL — `module audio not found`.
 
-- [ ] **Step 3: Implement `openmix-core/src/audio/decode.rs`**
+- [x] **Step 3: Implement `openmix-core/src/audio/decode.rs`**
 
 ```rust
 use std::path::{Path, PathBuf};
@@ -750,7 +750,7 @@ impl DecodedStream {
 }
 ```
 
-- [ ] **Step 4: Implement `openmix-core/src/audio/peaks.rs`**
+- [x] **Step 4: Implement `openmix-core/src/audio/peaks.rs`**
 
 ```rust
 use openmix_core::error::AppError;
@@ -791,14 +791,14 @@ pub fn compute_peaks(
 }
 ```
 
-- [ ] **Step 5: Write `openmix-core/src/audio/mod.rs`** — `pub mod decode; pub mod peaks; pub use decode::{AudioChunk, DecodedStream, TrackMeta}; pub use peaks::{compute_peaks, Peak};` and add `pub mod audio;` to `lib.rs`.
+- [x] **Step 5: Write `openmix-core/src/audio/mod.rs`** — `pub mod decode; pub mod peaks; pub use decode::{AudioChunk, DecodedStream, TrackMeta}; pub use peaks::{compute_peaks, Peak};` and add `pub mod audio;` to `lib.rs`.
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `cargo test -p openmix-core --test audio_test`
 Expected: PASS (wav tests pass; fixture tests may fail until Step 7).
 
-- [ ] **Step 7: Generate and commit fixtures**
+- [x] **Step 7: Generate and commit fixtures**
 
 `scripts/gen-fixtures.py` (440 Hz sine, 44.1 kHz, 1 s, 16-bit mono → `sine1k_1s.wav`, stdlib only):
 
@@ -885,7 +885,7 @@ print("wrote sine1k_1s.mp3")
 
 Run: `bash scripts/gen-fixtures.sh`, then move the three outputs to `openmix-core/tests/fixtures/`. **Fallback if the Swift MP3 encode is finicky:** `brew install lame && lame --preset standard sine1k_1s.wav sine1k_1s.mp3` (dev-only tool; fixtures are committed, so CI never runs this). Verify fixture decode tests pass, then commit.
 
-- [ ] **Step 8: Quality gates + commit**
+- [x] **Step 8: Quality gates + commit**
 
 Run: `cargo fmt --all --check && cargo clippy -p openmix-core --all-targets -- -D warnings && cargo test -p openmix-core`
 Expected: all green.
