@@ -1,3 +1,4 @@
+pub mod audio;
 pub mod error;
 pub use error::AppError;
 
