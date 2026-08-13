@@ -2,13 +2,7 @@ import { useEffect, useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useProjectsStore } from '../store/projects';
 import { useTracksStore } from '../store/tracks';
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+import { TrackCard } from '../components/library/TrackCard';
 
 export default function Home() {
   const {
@@ -99,12 +93,8 @@ export default function Home() {
           </div>
           <ul>
             {tracks.map((t) => (
-              <li key={t.id} className="mb-1 rounded border px-3 py-2">
-                <span className="font-medium">{t.title}</span>
-                {t.artist && <span className="ml-2 text-gray-500">{t.artist}</span>}
-                <span className="ml-auto text-right text-gray-500">
-                  {formatDuration(t.duration_ms)}
-                </span>
+              <li key={t.id} className="mb-1">
+                <TrackCard track={t} />
               </li>
             ))}
           </ul>
