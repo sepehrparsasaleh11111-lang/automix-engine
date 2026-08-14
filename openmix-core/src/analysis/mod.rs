@@ -1,0 +1,57 @@
+use crate::analysis::key::KeyResult;
+use crate::beatgrid::Beat;
+
+pub mod energy;
+pub mod key;
+
+pub use energy::{AnalysisConfig, AnalysisResult};
+pub use key::MusicalKey;
+
+pub trait TempoDetector {
+    fn bpm(&self, mono: &[f32], rate: u32) -> Option<f64>;
+}
+pub trait OnsetDetector {
+    fn onsets(&self, mono: &[f32], rate: u32) -> Vec<f64>;
+}
+pub trait BeatTracker {
+    fn beats(&self, mono: &[f32], rate: u32) -> Vec<Beat>;
+}
+pub trait KeyDetector {
+    fn key(&self, mono: &[f32], rate: u32) -> Option<KeyResult>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn analysis_result_defaults_to_all_none() {
+        let r = AnalysisResult {
+            bpm: None,
+            bpm_confidence: None,
+            onsets: vec![],
+            beats: vec![],
+            grid: None,
+            key: None,
+            rms_db: None,
+            peak_db: None,
+            energy_windows: vec![],
+        };
+        assert!(r.bpm.is_none() && r.key.is_none() && r.grid.is_none());
+    }
+
+    #[test]
+    fn musical_key_relative_and_camelot() {
+        assert_eq!(MusicalKey::CMajor.relative(), MusicalKey::AMinor);
+        assert_eq!(MusicalKey::AMinor.relative(), MusicalKey::CMajor); // +9 semitones, mode flips back
+        assert_eq!(MusicalKey::CMajor.camelot(), (8, 'B'));
+        assert_eq!(MusicalKey::AMinor.camelot(), (8, 'A'));
+    }
+
+    #[test]
+    fn musical_key_serializes() {
+        let j = serde_json::to_string(&MusicalKey::FSharpMinor).unwrap();
+        let k: MusicalKey = serde_json::from_str(&j).unwrap();
+        assert_eq!(k, MusicalKey::FSharpMinor);
+    }
+}

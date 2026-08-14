@@ -1,5 +1,10 @@
+pub mod analysis;
 pub mod audio;
+pub mod beatgrid;
 pub mod error;
+pub use analysis::energy::{energy_windows, peak_db_of, rms_db_of};
+pub use analysis::{AnalysisConfig, AnalysisResult};
+pub use beatgrid::{Beat, BeatGrid};
 pub use error::AppError;
 
 pub fn engine_name() -> &'static str {
