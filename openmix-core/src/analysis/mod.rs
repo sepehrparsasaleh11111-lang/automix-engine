@@ -1,5 +1,9 @@
 use crate::analysis::key::KeyResult;
-use crate::beatgrid::Beat;
+use crate::audio::decode::DecodedStream;
+use crate::audio::mono::to_mono;
+use crate::beatgrid::{correct, fit_uniform, Beat};
+use crate::error::AppError;
+use std::path::Path;
 use std::sync::atomic::AtomicBool;
 
 pub mod beats;
@@ -34,6 +38,75 @@ pub trait BeatTracker {
 }
 pub trait KeyDetector {
     fn key(&self, mono: &[f32], rate: u32) -> Option<KeyResult>;
+}
+
+/// Decode an audio file and run the full analysis pipeline. This is the
+/// minimal orchestrator; Phase 3 (Task 12) formalizes it into the real
+/// runner with cancellation and progress.
+pub fn analyze_path(
+    path: impl AsRef<Path>,
+    config: &AnalysisConfig,
+) -> Result<AnalysisResult, AppError> {
+    let mut stream = DecodedStream::open(path)?;
+    let mut samples = Vec::new();
+    while let Some(chunk) = stream.next_chunk(65536)? {
+        samples.extend_from_slice(&chunk.samples);
+    }
+    let rate = stream.sample_rate();
+    let mono = to_mono(&samples, stream.channels(), rate, rate);
+
+    #[cfg(feature = "native-analysis")]
+    let (bpm, bpm_confidence) = match tempo::aubio_bpm(&mono, rate) {
+        Some((b, c)) => (Some(b), Some(c)),
+        None => (None, None),
+    };
+    #[cfg(not(feature = "native-analysis"))]
+    let (bpm, bpm_confidence) = (tempo::autocorr_bpm(&mono, rate), None);
+
+    #[cfg(feature = "native-analysis")]
+    let onsets = onsets::aubio_onsets(&mono, rate);
+    #[cfg(not(feature = "native-analysis"))]
+    let onsets = onsets::flux_onsets(&mono, rate);
+
+    #[cfg(feature = "native-analysis")]
+    let beats = beats::aubio_beats(&mono, rate);
+    #[cfg(not(feature = "native-analysis"))]
+    let beats = beats::histogram_beats(&mono, rate);
+
+    let beat_times: Vec<f64> = beats.iter().map(|b| b.position_sec).collect();
+    let grid = if beat_times.len() >= 2 {
+        let mut g = fit_uniform(&beat_times, 0.5);
+        if g.confidence < 0.8 {
+            g = correct(g, &beat_times, 50.0);
+        }
+        Some(g)
+    } else {
+        None
+    };
+
+    let key_input = match config.key_max_seconds {
+        Some(s) => &mono[..((rate as f64 * s) as usize).min(mono.len())],
+        None => &mono[..],
+    };
+    #[cfg(feature = "native-analysis")]
+    let key = key::best_key(
+        key::KeyFinderKeyDetector.key(key_input, rate),
+        key::KrumhanslKeyDetector.key(key_input, rate),
+    );
+    #[cfg(not(feature = "native-analysis"))]
+    let key = key::KrumhanslKeyDetector.key(key_input, rate);
+
+    Ok(AnalysisResult {
+        bpm,
+        bpm_confidence,
+        onsets,
+        beats,
+        grid,
+        key,
+        rms_db: Some(energy::rms_db_of(&mono)),
+        peak_db: Some(energy::peak_db_of(&mono)),
+        energy_windows: energy::energy_windows(&mono, rate, config.energy_window_ms),
+    })
 }
 
 #[cfg(test)]

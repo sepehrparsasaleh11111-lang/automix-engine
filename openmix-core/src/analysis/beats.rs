@@ -91,6 +91,7 @@ mod tests {
     #[cfg(feature = "native-analysis")]
     use super::aubio_beats;
     use super::histogram_beats;
+    #[cfg(feature = "native-analysis")]
     use crate::beatgrid::BeatLabel;
 
     fn synthetic_kick(rate: u32, bpm: f64, seconds: f64) -> Vec<f32> {

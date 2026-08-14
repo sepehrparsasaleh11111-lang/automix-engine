@@ -17,7 +17,7 @@ pub(crate) fn aubio_bpm_cancellable(
     cancel: &AnalysisCancel,
 ) -> Option<(f64, f32)> {
     use aubio_rs::{OnsetMode, Tempo};
-    let hop = 512usize;
+    let hop = 256usize;
     let mut tempo = Tempo::new(OnsetMode::SpecFlux, 1024, hop, rate).ok()?;
     let mut padded = mono.to_vec();
     let rem = padded.len() % hop;
@@ -113,7 +113,7 @@ mod tests {
     fn aubio_detects_120bpm_kick() {
         let mono = synthetic_kick(44100, 120.0, 20.0);
         let (bpm, conf) = aubio_bpm(&mono, 44100).expect("detect");
-        assert!((bpm - 120.0).abs() <= 120.0 * 0.02, "bpm = {bpm}"); // aubio period grid: ±1.6% at hop 512
+        assert!((bpm - 120.0).abs() <= 120.0 * 0.02, "bpm = {bpm}"); // aubio period grid: ±0.8% at hop 256
         assert!(conf > 0.0);
     }
 

@@ -2,7 +2,7 @@
 const KK_MAJOR: [f32; 12] = [
     6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88,
 ];
-// Krumhansl–Kessler minor profile, tonic = A
+// Krumhansl–Kessler minor profile (normalized), tonic = C (index 0)
 const KK_MINOR: [f32; 12] = [
     6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17,
 ];
@@ -68,7 +68,7 @@ pub fn ks_key(mono: &[f32], rate: u32) -> Option<KeyResult> {
         for pc in 0..12usize {
             let idx = (tonic + pc) % 12;
             cmaj += norm[idx] * KK_MAJOR[pc];
-            cmin += norm[idx] * KK_MINOR[(pc + 9) % 12];
+            cmin += norm[idx] * KK_MINOR[pc];
         }
         if cmaj > best.1 {
             best = (tonic, cmaj, false);
@@ -125,6 +125,38 @@ mod tests {
             k.key
         );
         assert!(k.confidence > 0.3, "conf {}", k.confidence);
+    }
+
+    fn a_minor_pad(rate: u32, seconds: f64) -> Vec<f32> {
+        let n = (rate as f64 * seconds) as usize;
+        let attack = (rate as f64 * 0.010) as usize;
+        let freqs = [440.00f64, 523.25, 659.25];
+        (0..n)
+            .map(|i| {
+                let t = i as f64 / rate as f64;
+                let mut v = 0.0f64;
+                for f in freqs {
+                    v += 0.2 * (2.0 * std::f64::consts::PI * f * t).sin();
+                }
+                let ramp = if i < attack {
+                    i as f64 / attack as f64
+                } else {
+                    1.0
+                };
+                (v * ramp) as f32
+            })
+            .collect()
+    }
+
+    #[test]
+    fn ks_detects_a_minor_pad_not_third_low() {
+        let mono = a_minor_pad(44100, 6.0);
+        let k = ks_key(&mono, 44100).expect("detect");
+        assert!(
+            k.key == MusicalKey::AMinor || k.key == MusicalKey::CMajor,
+            "key {:?} (regression: minor profiles had a 3-semitone index offset)",
+            k.key
+        );
     }
 
     #[test]
