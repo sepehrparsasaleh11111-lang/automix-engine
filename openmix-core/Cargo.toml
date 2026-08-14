@@ -7,10 +7,13 @@ authors.workspace = true
 
 [features]
 default = ["native-analysis"]
-native-analysis = []
+native-analysis = ["dep:aubio-rs"]
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 symphonia = { workspace = true }
+rayon = { workspace = true }
+rustfft = { workspace = true }
+aubio-rs = { workspace = true, optional = true }
