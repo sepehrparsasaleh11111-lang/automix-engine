@@ -1,12 +1,14 @@
-mod commands;
+pub mod commands;
 pub mod import;
 pub mod storage;
+
+use std::sync::Arc;
 
 use storage::Storage;
 use tauri::Manager;
 
 pub struct AppState {
-    pub storage: Storage,
+    pub storage: Arc<Storage>,
 }
 
 #[tauri::command]
@@ -22,7 +24,9 @@ pub fn run() {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let storage = Storage::open(&data_dir.join("openmix.db"))?;
-            app.manage(AppState { storage });
+            app.manage(AppState {
+                storage: Arc::new(storage),
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -31,7 +35,10 @@ pub fn run() {
             commands::projects::create_project,
             commands::projects::delete_project,
             commands::tracks::list_tracks,
-            commands::tracks::import_tracks
+            commands::tracks::import_tracks,
+            commands::analysis::analyze_track,
+            commands::analysis::get_analysis,
+            commands::analysis::get_beat_grid
         ])
         .run(tauri::generate_context!())
         .expect("error while running OpenMix AI");

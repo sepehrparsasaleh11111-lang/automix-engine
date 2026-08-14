@@ -58,7 +58,7 @@ pub struct Storage {
     conn: Mutex<Connection>,
 }
 
-fn now_stamp() -> String {
+pub(crate) fn now_stamp() -> String {
     let secs = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -167,6 +167,19 @@ impl Storage {
             None => stmt.query_map([], row_to_track)?,
         };
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    pub fn get_track(&self, track_id: &str) -> Result<Option<Track>, StorageError> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, project_id, path, title, artist, album, duration_ms, sample_rate, \
+             channels, format, file_hash, peaks, created_at FROM tracks WHERE id = ?1",
+        )?;
+        let mut rows = stmt.query(params![track_id])?;
+        match rows.next()? {
+            Some(row) => Ok(Some(row_to_track(row)?)),
+            None => Ok(None),
+        }
     }
 
     pub fn get_pref(&self, key: &str) -> Result<Option<String>, StorageError> {
