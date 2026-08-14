@@ -8,10 +8,11 @@ Dependency phase: when the crate enters the codebase and becomes load-bearing.
 | Crate | Phase | Purpose | Rationale / alternative |
 |-------|-------|---------|--------------------------|
 | `symphonia` | 1 | MP3/WAV/FLAC decoding, streaming chunk reads | Pure Rust, no system deps; the reason we don't need ffmpeg |
-| `aubio-rs` (aubio C lib) | 2 | Tempo/onset/beat detection | Industry-standard beat tracking; accepted C dep (user decision); behind traits + `native-analysis` feature |
-| `keyfinder` bindings (KeyFinder C++) | 2 | Musical key detection | Mature algorithm; behind `KeyDetector` trait + `native-analysis` feature |
+| `aubio-rs` (aubio C lib) | 2 — **used** | Tempo/onset/beat detection | Industry-standard beat tracking; compiled via `builtin` feature (no system install); GPL-3.0 behind traits + `native-analysis` feature |
+| `keyfinder` bindings (KeyFinder C++) | 2 — **used** | Musical key detection | Vendored `mixxxdj/libkeyfinder` v2.2.6 compiled by `cc`; GPL-3.0 behind `KeyDetector` trait + `native-analysis` feature |
+| `rustfft` | 2 — **used** | STFT chroma for the Krumhansl–Schmuckler fallback | Pure Rust; also used by onset/key fallbacks |
+| `rayon` | 2 — **used** | Parallel analysis | Data-parallel CPU work (app callers analyzing multiple tracks) |
 | `rubato` | 3 | Time-stretch + resampling | High-quality TDHS, pure Rust; behind replaceable trait |
-| `rayon` | 2 | Parallel analysis | Data-parallel CPU work |
 | `tokio` | 1 | Async IPC/event runtime (core side shared with app) | Standard async runtime |
 | `cpal` | 3 (preview) | Native audio output for live preview | Cross-platform output |
 | MP3 encoder: `lame-rs` (LAME C) | 4 | MP3 export — **decided**: LAME is the reference encoder; audio quality is priority #1 | LGPL; attribution in README + legal screen. Pure-Rust encoders not used at this quality bar |
@@ -59,9 +60,10 @@ a dedicated renderer is required for beat-grid overlay precision anyway.
 
 | Dep | Why |
 |-----|-----|
-| CMake | Builds aubio + KeyFinder + LAME (only when `native-analysis` / MP3 encoding enabled) |
-| C/C++ compiler (clang/MSVC) | Compiles C/C++ deps |
-| Xcode CLT (macOS) | Apple toolchain, clang, cmake |
+| C/C++ compiler (clang/MSVC) | Compiles aubio (builtin) + vendored KeyFinder via the `cc` crate |
+| libclang | `bindgen` (aubio-sys generates bindings at build time) — from Xcode CLT on macOS, LLVM on Windows runners |
+| CMake | Only for Tauri packaging; analysis builds do not use it |
+| Xcode CLT (macOS) | Apple toolchain, clang, libclang |
 | WebView2 (Windows) | Tauri webview runtime (preinstalled on Win11) |
 | WiX/NSIS (Windows, packaging) | .msi/.exe installers (bundled by Tauri) |
 
@@ -87,5 +89,7 @@ a dedicated renderer is required for beat-grid overlay precision anyway.
 
 - Rust crates: semver-compatible ranges; lockfile committed.
 - JS: lockfile committed (`pnpm-lock.yaml`).
-- Long-lived C vendoring decision deferred to Phase 2 when bindings are added
-  (aubio can be fetched via build script; revisit if builds are flaky).
+- C vendoring decided in Phase 2: aubio builds via `aubio-rs` `builtin`
+  (sources fetched by the crate), libkeyfinder is vendored at a pinned
+  commit (`openmix-core/src/keyfinder/vendor/`); both behind
+  `native-analysis`.

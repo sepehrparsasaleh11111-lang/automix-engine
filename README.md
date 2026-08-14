@@ -9,9 +9,10 @@ storage, no paid APIs, no accounts.
 
 ## Status
 
-**Phase 1 complete — Foundation.** The app imports MP3 / WAV / FLAC with
-streamed analysis, renders waveform peaks, and manages projects/tracks in a
-local SQLite database. Phase 2 (BPM / beat-grid / key analysis) is next.
+**Phase 2 complete — Analysis.** BPM, DJ-style beat grid with automatic
+backend correction, key detection, and RMS energy, accuracy-tested at ≥90% on
+a synthetic fixture suite. Phase 3 (AutoMix + interactive beat-grid editing)
+is next.
 
 ## Features (planned)
 
@@ -50,5 +51,7 @@ Full instructions: [docs/build-guide.md](docs/build-guide.md)
 
 MIT — see [LICENSE](LICENSE).
 
-Third-party notices: LAME (LGPL) is used for MP3 encoding; its license
-requires attribution (added to the legal/about screen at Phase 4).
+Third-party notices: LAME (LGPL) is used for MP3 encoding; aubio and
+libkeyfinder (GPL-3.0) are used for analysis behind the `native-analysis`
+feature (default on; `--no-default-features` builds pure-Rust fallbacks).
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -26,9 +26,11 @@ xcode-select --install
 # 4. Node + pnpm (Node 22 already installed here)
 npm install -g pnpm@9
 
-# 5. C dependencies (aubio, KeyFinder) — built via CMake by Rust build scripts;
-#    needs `cmake` and a C++ compiler (comes with Xcode CLT)
-brew install cmake
+# 5. C dependencies (aubio, KeyFinder) — compiled by Rust build scripts
+#    (cc crate) with no CMake, no pkg-config, no system installs.
+#    Needs a C++ compiler (comes with Xcode CLT) and libclang for bindgen
+#    (provided by Xcode CLT on macOS; preinstalled on GitHub windows runners).
+brew install cmake   # only needed for packaging (Tauri); analysis builds don't use it
 ```
 
 ## Windows 10/11
@@ -114,6 +116,15 @@ pnpm --dir frontend e2e           # Playwright (mocked IPC)
 
 - `openmix-core` has **zero Tauri dependency** — `cargo test -p openmix-core`
   works on a bare machine with only Rust, enabling headless CI and quick iteration.
-- aubio/KeyFinder are C/C++ deps compiled at build time via CMake;
-  first build will take a few minutes.
+- Analysis C/C++ deps are compiled at build time by Rust build scripts:
+  - **aubio**: compiled from source via the `aubio-rs` `builtin` feature
+    (no system aubio, no pkg-config, no CMake — only a C compiler and
+    libclang for bindgen). GPL-3.0.
+  - **KeyFinder** (`native-analysis`): vendored `mixxxdj/libkeyfinder` C++
+    compiled by the `cc` crate; requires a C++ compiler (Xcode CLT /
+    MSVC Build Tools — already a prerequisite). GPL-3.0.
+  - Both are optional behind `native-analysis` (default on);
+    `cargo check --workspace --no-default-features` builds the pure-Rust
+    fallback path. See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+  - First build will take a few minutes (aubio + KeyFinder + bindgen).
 - Keep Node ≥ 20 (Vite 6 requirement); Node 22 is the pinned baseline.
