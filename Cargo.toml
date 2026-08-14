@@ -17,3 +17,4 @@ symphonia = { version = "0.5", features = ["mp3", "flac", "wav", "pcm"] }
 rayon = "1"
 rustfft = "6"
 aubio-rs = { version = "0.2", features = ["builtin", "bindgen"] }
+cc = "1"

@@ -2419,6 +2419,7 @@ name = "openmix-core"
 version = "0.1.0"
 dependencies = [
  "aubio-rs",
+ "cc",
  "rayon",
  "rustfft",
  "serde",

@@ -2,6 +2,8 @@ pub mod analysis;
 pub mod audio;
 pub mod beatgrid;
 pub mod error;
+#[cfg(feature = "native-analysis")]
+pub mod keyfinder;
 pub use analysis::energy::{energy_windows, peak_db_of, rms_db_of};
 pub use analysis::{AnalysisConfig, AnalysisResult};
 pub use beatgrid::{Beat, BeatGrid, BeatLabel, BpmCurvePoint};

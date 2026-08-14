@@ -1,0 +1,35 @@
+LibKeyFinder (keyfinder) — Vendored Third-Party Sources
+=========================================================
+
+Upstream project : mixxxdj/libkeyfinder
+Upstream URL    : https://github.com/mixxxdj/libkeyfinder
+Vendored commit : a409c7447e9f440a12627ff4a540a43e41b48a55
+Vendored tag    : v2.2.6
+Copyright       : 2011-2015 Ibrahim Sha'ath
+
+License
+-------
+LibKeyFinder is licensed under the GNU General Public License, version 3
+(or, at your option, any later version). The full license text is available
+at: https://www.gnu.org/licenses/gpl-3.0.txt
+
+This vendored copy is distributed so that its license grant is preserved and
+visible. Consumers of openmix-core must comply with the GPL-3.0-or-later
+terms of the included sources.
+
+Modifications
+-------------
+All sources under vendor/libkeyfinder/src/ are verbatim copies from the
+pinned upstream commit, EXCEPT:
+
+  - src/fftadapter.cpp — replaced with a portable, dependency-free radix-2
+    FFT implementation. Upstream's version hard-requires the third-party
+    FFTW3 library (find_package(FFTW3 REQUIRED)). libkeyfinder is explicitly
+    designed to allow an alternate FFT adapter (upstream file comment:
+    "Included here to allow substitution of a separate implementation .cpp").
+    The public interface in src/fftadapter.h is unchanged, so the rest of the
+    library is unaffected.
+
+Nothing vendored requires FFTW3, JSON, or soundtouch; only the minimal set of
+sources needed for KeyFinder::KeyFinder::keyOfAudio is included, and unused
+source files were omitted from the build (see task-9-report.md).

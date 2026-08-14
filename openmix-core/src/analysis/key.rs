@@ -88,6 +88,48 @@ impl MusicalKey {
         };
         (n, l)
     }
+    /// Map a libkeyfinder `key_t` enum value (vendored at
+    /// `src/keyfinder/vendor/libkeyfinder/src/constants.h`) to `MusicalKey`.
+    /// Index order follows the vendored header: per pitch class (A, Bb, B,
+    /// C, Db, D, Eb, E, F, Gb, G, Ab) major then minor, i.e.
+    /// `A_MAJOR=0 .. A_FLAT_MINOR=23`. Returns `None` for out-of-range or
+    /// `SILENCE` (24).
+    pub fn from_keyfinder_index(i: i32) -> Option<MusicalKey> {
+        use MusicalKey::*;
+        const MAJOR: [MusicalKey; 12] = [
+            AMajor,
+            ASharpMajor,
+            BMajor,
+            CMajor,
+            CSharpMajor,
+            DMajor,
+            DSharpMajor,
+            EMajor,
+            FMajor,
+            FSharpMajor,
+            GMajor,
+            GSharpMajor,
+        ];
+        const MINOR: [MusicalKey; 12] = [
+            AMinor,
+            ASharpMinor,
+            BMinor,
+            CMinor,
+            CSharpMinor,
+            DMinor,
+            DSharpMinor,
+            EMinor,
+            FMinor,
+            FSharpMinor,
+            GMinor,
+            GSharpMinor,
+        ];
+        if !(0..24).contains(&i) {
+            return None;
+        }
+        let pc = (i / 2) as usize;
+        Some(if i % 2 == 0 { MAJOR[pc] } else { MINOR[pc] })
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -102,4 +144,54 @@ pub struct KeyResult {
     pub confidence: f32,
     pub algorithm: KeyAlgorithm,
     pub alternate: Option<(MusicalKey, f32)>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn keyfinder_index_maps_all_24_to_distinct_keys() {
+        let mut seen = HashSet::new();
+        for i in 0..24 {
+            let k = MusicalKey::from_keyfinder_index(i).expect("in range");
+            assert!(
+                seen.insert(k.camelot()),
+                "duplicate camelot for index {i}: {k:?}"
+            );
+        }
+        assert_eq!(seen.len(), 24);
+    }
+
+    #[test]
+    fn keyfinder_index_out_of_range_is_none() {
+        assert_eq!(MusicalKey::from_keyfinder_index(-1), None);
+        assert_eq!(MusicalKey::from_keyfinder_index(24), None);
+        assert_eq!(MusicalKey::from_keyfinder_index(100), None);
+    }
+
+    #[test]
+    fn keyfinder_index_spot_checks() {
+        assert_eq!(
+            MusicalKey::from_keyfinder_index(0),
+            Some(MusicalKey::AMajor)
+        );
+        assert_eq!(
+            MusicalKey::from_keyfinder_index(1),
+            Some(MusicalKey::AMinor)
+        );
+        assert_eq!(
+            MusicalKey::from_keyfinder_index(6),
+            Some(MusicalKey::CMajor)
+        );
+        assert_eq!(
+            MusicalKey::from_keyfinder_index(18),
+            Some(MusicalKey::FSharpMajor)
+        );
+        assert_eq!(
+            MusicalKey::from_keyfinder_index(23),
+            Some(MusicalKey::GSharpMinor)
+        );
+    }
 }

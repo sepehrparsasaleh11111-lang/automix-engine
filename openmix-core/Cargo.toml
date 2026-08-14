@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+build = "src/keyfinder/build.rs"
 
 [features]
 default = ["native-analysis"]
@@ -17,3 +18,6 @@ symphonia = { workspace = true }
 rayon = { workspace = true }
 rustfft = { workspace = true }
 aubio-rs = { workspace = true, optional = true }
+
+[build-dependencies]
+cc = { workspace = true }
