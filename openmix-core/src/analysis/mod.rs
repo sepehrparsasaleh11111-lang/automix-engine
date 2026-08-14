@@ -3,6 +3,7 @@ use crate::beatgrid::Beat;
 use std::sync::atomic::AtomicBool;
 
 pub mod beats;
+pub mod chroma;
 pub mod energy;
 pub mod key;
 pub mod onsets;

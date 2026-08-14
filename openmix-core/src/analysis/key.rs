@@ -88,6 +88,43 @@ impl MusicalKey {
         };
         (n, l)
     }
+    /// Map a tonic semitone index (0..11 = C..B) and mode to `MusicalKey`.
+    /// `minor: true` selects the minor key on the same tonic pitch class
+    /// (e.g. tonic 0 → C minor, tonic 9 → A minor).
+    pub fn from_tonic_mode(tonic: i32, minor: bool) -> Option<MusicalKey> {
+        use MusicalKey::*;
+        const MAJOR: [MusicalKey; 12] = [
+            CMajor,
+            CSharpMajor,
+            DMajor,
+            DSharpMajor,
+            EMajor,
+            FMajor,
+            FSharpMajor,
+            GMajor,
+            GSharpMajor,
+            AMajor,
+            ASharpMajor,
+            BMajor,
+        ];
+        const MINOR: [MusicalKey; 12] = [
+            CMinor,
+            CSharpMinor,
+            DMinor,
+            DSharpMinor,
+            EMinor,
+            FMinor,
+            FSharpMinor,
+            GMinor,
+            GSharpMinor,
+            AMinor,
+            ASharpMinor,
+            BMinor,
+        ];
+        let t = tonic.rem_euclid(12) as usize;
+        Some(if minor { MINOR[t] } else { MAJOR[t] })
+    }
+
     /// Map a libkeyfinder `key_t` enum value (vendored at
     /// `src/keyfinder/vendor/libkeyfinder/src/constants.h`) to `MusicalKey`.
     /// Index order follows the vendored header: per pitch class (A, Bb, B,
@@ -136,6 +173,42 @@ impl MusicalKey {
 pub enum KeyAlgorithm {
     KeyFinder,
     KrumhanslSchmuckler,
+}
+
+/// Combine KeyFinder and Krumhansl–Schmuckler results: the primary is the
+/// higher-confidence result, with the other's (key, confidence) as alternate.
+/// Ties prefer the first argument (KeyFinder).
+pub fn best_key(kf: Option<KeyResult>, ks: Option<KeyResult>) -> Option<KeyResult> {
+    match (kf, ks) {
+        (Some(a), Some(b)) => {
+            let (mut primary, other) = if b.confidence > a.confidence {
+                (b, a)
+            } else {
+                (a, b)
+            };
+            primary.alternate = Some((other.key, other.confidence));
+            Some(primary)
+        }
+        (Some(a), None) => Some(a),
+        (None, Some(b)) => Some(b),
+        (None, None) => None,
+    }
+}
+
+#[cfg(feature = "native-analysis")]
+pub struct KeyFinderKeyDetector;
+#[cfg(feature = "native-analysis")]
+impl super::KeyDetector for KeyFinderKeyDetector {
+    fn key(&self, mono: &[f32], rate: u32) -> Option<KeyResult> {
+        crate::keyfinder::detect_key(mono, rate)
+    }
+}
+
+pub struct KrumhanslKeyDetector;
+impl super::KeyDetector for KrumhanslKeyDetector {
+    fn key(&self, mono: &[f32], rate: u32) -> Option<KeyResult> {
+        crate::analysis::chroma::ks_key(mono, rate)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
