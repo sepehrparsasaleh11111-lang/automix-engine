@@ -33,8 +33,10 @@ jobs:
         run: cargo test --workspace
 
       # Native-analysis feature isolation: prove the fallback build compiles.
+      # Package-scoped: openmix-app's dependency edge re-enables openmix-core
+      # default features, so --workspace --no-default-features would not gate it.
       - if: ${{ hashFiles('openmix-core/Cargo.toml') != '' }}
-        run: cargo check --workspace --no-default-features
+        run: cargo check -p openmix-core --no-default-features
 
   frontend:
     name: Frontend (${{ matrix.os }})
