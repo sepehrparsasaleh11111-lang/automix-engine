@@ -49,6 +49,52 @@ mod tests {
     }
 
     #[test]
+    fn camelot_relative_pairs_share_number_all_keys() {
+        const ALL: [MusicalKey; 24] = [
+            MusicalKey::AMajor,
+            MusicalKey::ASharpMajor,
+            MusicalKey::BMajor,
+            MusicalKey::CMajor,
+            MusicalKey::CSharpMajor,
+            MusicalKey::DMajor,
+            MusicalKey::DSharpMajor,
+            MusicalKey::EMajor,
+            MusicalKey::FMajor,
+            MusicalKey::FSharpMajor,
+            MusicalKey::GMajor,
+            MusicalKey::GSharpMajor,
+            MusicalKey::AMinor,
+            MusicalKey::ASharpMinor,
+            MusicalKey::BMinor,
+            MusicalKey::CMinor,
+            MusicalKey::CSharpMinor,
+            MusicalKey::DMinor,
+            MusicalKey::DSharpMinor,
+            MusicalKey::EMinor,
+            MusicalKey::FMinor,
+            MusicalKey::FSharpMinor,
+            MusicalKey::GMinor,
+            MusicalKey::GSharpMinor,
+        ];
+        for k in ALL {
+            let (n, l) = k.camelot();
+            let (rn, rl) = k.relative().camelot();
+            assert_eq!(
+                n,
+                rn,
+                "key {k:?} and relative {:?} share camelot number",
+                k.relative()
+            );
+            assert!(
+                l != rl,
+                "key {k:?} and relative {:?} must differ in mode letter",
+                k.relative()
+            );
+            assert!((l == 'A' || l == 'B') && (rl == 'A' || rl == 'B'));
+        }
+    }
+
+    #[test]
     fn musical_key_serializes() {
         let j = serde_json::to_string(&MusicalKey::FSharpMinor).unwrap();
         let k: MusicalKey = serde_json::from_str(&j).unwrap();
