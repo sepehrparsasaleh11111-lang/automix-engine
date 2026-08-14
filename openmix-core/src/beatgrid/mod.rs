@@ -28,6 +28,7 @@ pub struct BeatGrid {
 }
 
 pub mod correct;
+pub use correct::{correct, detect_drift};
 
 pub fn fit_uniform(beats: &[f64], beat_interval_guess: f64) -> BeatGrid {
     if beats.len() < 2 || beat_interval_guess <= 0.0 {
