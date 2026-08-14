@@ -1,11 +1,18 @@
 use crate::analysis::key::KeyResult;
 use crate::beatgrid::Beat;
+use std::sync::atomic::AtomicBool;
 
 pub mod energy;
 pub mod key;
+pub mod tempo;
 
 pub use energy::{AnalysisConfig, AnalysisResult};
 pub use key::MusicalKey;
+#[cfg(feature = "native-analysis")]
+pub use tempo::AubioTempoDetector;
+pub use tempo::AutocorrTempoDetector;
+
+pub type AnalysisCancel = AtomicBool;
 
 pub trait TempoDetector {
     fn bpm(&self, mono: &[f32], rate: u32) -> Option<f64>;
