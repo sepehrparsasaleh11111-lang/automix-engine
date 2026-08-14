@@ -4,10 +4,14 @@ use std::sync::atomic::AtomicBool;
 
 pub mod energy;
 pub mod key;
+pub mod onsets;
 pub mod tempo;
 
 pub use energy::{AnalysisConfig, AnalysisResult};
 pub use key::MusicalKey;
+#[cfg(feature = "native-analysis")]
+pub use onsets::AubioOnsetDetector;
+pub use onsets::FluxOnsetDetector;
 #[cfg(feature = "native-analysis")]
 pub use tempo::AubioTempoDetector;
 pub use tempo::AutocorrTempoDetector;
