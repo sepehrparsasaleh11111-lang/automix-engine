@@ -14,7 +14,9 @@ pub struct AnalysisConfig {
 impl Default for AnalysisConfig {
     fn default() -> Self {
         Self {
-            tempo_hop: 512,
+            // 256 (not 512): aubio Tempo at hop 512 reads half-tempo on
+            // 174/180 BPM fixtures and misses beats; 128 re-halves.
+            tempo_hop: 256,
             key_rate: 11_025,
             key_max_seconds: Some(600.0),
             energy_window_ms: 100,
