@@ -27,3 +27,23 @@ CREATE TABLE IF NOT EXISTS preferences (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+PRAGMA user_version = 2;
+
+CREATE TABLE IF NOT EXISTS track_analysis (
+  track_id TEXT PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE,
+  file_hash TEXT NOT NULL,
+  bpm REAL,
+  bpm_confidence REAL,
+  key TEXT,
+  key_confidence REAL,
+  energy TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS beat_grids (
+  track_id TEXT PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE,
+  file_hash TEXT NOT NULL,
+  grid TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);

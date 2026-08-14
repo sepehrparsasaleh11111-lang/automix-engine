@@ -1,4 +1,4 @@
-use openmix_app_lib::storage::{Storage, Track};
+use openmix_app_lib::storage::{AnalysisRow, Storage, Track};
 
 fn sample_track(project_id: Option<&str>) -> Track {
     Track {
@@ -62,4 +62,67 @@ fn migrations_are_idempotent() {
     storage2.create_project("B").unwrap();
     assert_eq!(storage.list_projects().unwrap().len(), 1);
     assert_eq!(storage2.list_projects().unwrap().len(), 1);
+}
+
+#[test]
+fn analysis_upsert_roundtrip() {
+    let storage = Storage::open_in_memory().unwrap();
+    let p = storage.create_project("P").unwrap();
+    storage.insert_track(&sample_track(Some(&p.id))).unwrap();
+    let tracks = storage.list_tracks(Some(&p.id)).unwrap();
+    let row = AnalysisRow {
+        track_id: tracks[0].id.clone(),
+        file_hash: "abc".into(),
+        bpm: Some(128.0),
+        bpm_confidence: Some(0.9),
+        key: Some("AMinor".into()),
+        key_confidence: Some(0.8),
+        energy: r#"{"rms_db":-12.0,"peak_db":-1.0,"energy_windows":[1,2,3]}"#.into(),
+        created_at: "123".into(),
+    };
+    storage.upsert_analysis(&row).unwrap();
+    let got = storage.get_analysis(&row.track_id).unwrap().unwrap();
+    assert_eq!(got.bpm, Some(128.0));
+    assert_eq!(got.key.as_deref(), Some("AMinor"));
+    storage.upsert_analysis(&row).unwrap(); // idempotent upsert
+    let again = storage.get_analysis(&row.track_id).unwrap().unwrap();
+    assert_eq!(again.bpm, Some(128.0));
+}
+
+#[test]
+fn beat_grid_roundtrip() {
+    let storage = Storage::open_in_memory().unwrap();
+    let p = storage.create_project("P").unwrap();
+    storage.insert_track(&sample_track(Some(&p.id))).unwrap();
+    let tracks = storage.list_tracks(Some(&p.id)).unwrap();
+    let grid = r#"{"first_beat_offset":0.87,"bpm":120.0,"beat_interval":0.5,"confidence":0.95,"curve":[]}"#;
+    storage
+        .upsert_beat_grid(&tracks[0].id, "abc", grid)
+        .unwrap();
+    assert_eq!(
+        storage.get_beat_grid(&tracks[0].id).unwrap(),
+        Some(grid.to_string())
+    );
+}
+
+#[test]
+fn delete_project_cascades_analysis() {
+    let storage = Storage::open_in_memory().unwrap();
+    let p = storage.create_project("P").unwrap();
+    storage.insert_track(&sample_track(Some(&p.id))).unwrap();
+    // upsert with the real inserted track id
+    let tracks = storage.list_tracks(Some(&p.id)).unwrap();
+    let row = AnalysisRow {
+        track_id: tracks[0].id.clone(),
+        file_hash: "abc".into(),
+        bpm: None,
+        bpm_confidence: None,
+        key: None,
+        key_confidence: None,
+        energy: "{}".into(),
+        created_at: "1".into(),
+    };
+    storage.upsert_analysis(&row).unwrap();
+    storage.delete_project(&p.id).unwrap();
+    assert!(storage.get_analysis(&row.track_id).unwrap().is_none());
 }

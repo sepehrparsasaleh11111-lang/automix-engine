@@ -13,6 +13,8 @@ pub enum StorageError {
     Sqlite(#[from] rusqlite::Error),
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("invalid json: {0}")]
+    InvalidJson(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,6 +42,18 @@ pub struct Track {
     pub created_at: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AnalysisRow {
+    pub track_id: String,
+    pub file_hash: String,
+    pub bpm: Option<f64>,
+    pub bpm_confidence: Option<f32>,
+    pub key: Option<String>,
+    pub key_confidence: Option<f32>,
+    pub energy: String,
+    pub created_at: String,
+}
+
 pub struct Storage {
     conn: Mutex<Connection>,
 }
@@ -55,7 +69,7 @@ fn now_stamp() -> String {
 impl Storage {
     pub fn open(path: &Path) -> Result<Self, StorageError> {
         let conn = Connection::open(path)?;
-        db::init(&conn)?;
+        db::migrate(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -63,7 +77,7 @@ impl Storage {
 
     pub fn open_in_memory() -> Result<Self, StorageError> {
         let conn = Connection::open_in_memory()?;
-        db::init(&conn)?;
+        db::migrate(&conn)?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -174,6 +188,74 @@ impl Storage {
         )?;
         Ok(())
     }
+
+    pub fn upsert_analysis(&self, row: &AnalysisRow) -> Result<(), StorageError> {
+        check_json(&row.energy)?;
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO track_analysis (track_id, file_hash, bpm, bpm_confidence, key, \
+             key_confidence, energy, created_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) \
+             ON CONFLICT(track_id) DO UPDATE SET \
+             file_hash = excluded.file_hash, bpm = excluded.bpm, \
+             bpm_confidence = excluded.bpm_confidence, key = excluded.key, \
+             key_confidence = excluded.key_confidence, energy = excluded.energy, \
+             created_at = excluded.created_at",
+            params![
+                row.track_id,
+                row.file_hash,
+                row.bpm,
+                row.bpm_confidence,
+                row.key,
+                row.key_confidence,
+                row.energy,
+                row.created_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_analysis(&self, track_id: &str) -> Result<Option<AnalysisRow>, StorageError> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT track_id, file_hash, bpm, bpm_confidence, key, key_confidence, energy, \
+             created_at FROM track_analysis WHERE track_id = ?1",
+        )?;
+        let mut rows = stmt.query(params![track_id])?;
+        match rows.next()? {
+            Some(row) => Ok(Some(row_to_analysis(row)?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn upsert_beat_grid(
+        &self,
+        track_id: &str,
+        file_hash: &str,
+        grid_json: &str,
+    ) -> Result<(), StorageError> {
+        check_json(grid_json)?;
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO beat_grids (track_id, file_hash, grid, created_at) \
+             VALUES (?1, ?2, ?3, ?4) \
+             ON CONFLICT(track_id) DO UPDATE SET \
+             file_hash = excluded.file_hash, grid = excluded.grid, \
+             created_at = excluded.created_at",
+            params![track_id, file_hash, grid_json, now_stamp()],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_beat_grid(&self, track_id: &str) -> Result<Option<String>, StorageError> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT grid FROM beat_grids WHERE track_id = ?1")?;
+        let mut rows = stmt.query(params![track_id])?;
+        match rows.next()? {
+            Some(row) => Ok(Some(row.get(0)?)),
+            None => Ok(None),
+        }
+    }
 }
 
 fn row_to_track(row: &rusqlite::Row) -> rusqlite::Result<Track> {
@@ -194,4 +276,24 @@ fn row_to_track(row: &rusqlite::Row) -> rusqlite::Result<Track> {
         peaks,
         created_at: row.get(12)?,
     })
+}
+
+fn row_to_analysis(row: &rusqlite::Row) -> rusqlite::Result<AnalysisRow> {
+    Ok(AnalysisRow {
+        track_id: row.get(0)?,
+        file_hash: row.get(1)?,
+        bpm: row.get(2)?,
+        bpm_confidence: row.get(3)?,
+        key: row.get(4)?,
+        key_confidence: row.get(5)?,
+        energy: row.get(6)?,
+        created_at: row.get(7)?,
+    })
+}
+
+fn check_json(s: &str) -> Result<(), StorageError> {
+    if serde_json::from_str::<serde_json::Value>(s).is_err() {
+        return Err(StorageError::InvalidJson(s.to_string()));
+    }
+    Ok(())
 }
