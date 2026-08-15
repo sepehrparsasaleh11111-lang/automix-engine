@@ -90,3 +90,70 @@ fn flac_and_mp3_fixtures_decode() -> Result<(), AppError> {
     }
     Ok(())
 }
+
+fn write_long_stereo_wav(path: &std::path::Path, seconds: usize) -> std::io::Result<()> {
+    let rate = 44100u32;
+    let frames = rate as usize * seconds;
+    let amp = 0.6f32;
+    let mut pcm: Vec<i16> = Vec::with_capacity(frames * 2);
+    for i in 0..frames {
+        let t = i as f32 / rate as f32;
+        let s = (std::f32::consts::TAU * 1000.0 * t).sin() * amp;
+        let v = (s * i16::MAX as f32) as i16;
+        pcm.push(v);
+        pcm.push(v);
+    }
+    let data_size = pcm.len() * 2;
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"RIFF");
+    bytes.extend_from_slice(&(36 + data_size as u32).to_le_bytes());
+    bytes.extend_from_slice(b"WAVEfmt ");
+    bytes.extend_from_slice(&16u32.to_le_bytes());
+    bytes.extend_from_slice(&1u16.to_le_bytes());
+    bytes.extend_from_slice(&2u16.to_le_bytes());
+    bytes.extend_from_slice(&rate.to_le_bytes());
+    bytes.extend_from_slice(&(rate * 4).to_le_bytes());
+    bytes.extend_from_slice(&4u16.to_le_bytes());
+    bytes.extend_from_slice(&16u16.to_le_bytes());
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&(data_size as u32).to_le_bytes());
+    for s in &pcm {
+        bytes.extend_from_slice(&s.to_le_bytes());
+    }
+    std::fs::write(path, bytes)
+}
+
+// Regression (Gate 2 smoke): compute_peaks used to re-scan the entire
+// (never-drained) accumulator on every chunk, making import O(n^2) — a 5-minute
+// MP3 hung ~30 min at 100% CPU in the `tauri dev` (debug) build. Peaks must be
+// single-pass with bounded memory: this long-file run must stay well under a
+// debug-build budget that the old implementation blew through by orders of
+// magnitude.
+#[test]
+fn long_file_peaks_complete_in_single_pass() -> Result<(), AppError> {
+    let dir = std::env::temp_dir();
+    let path = dir.join("openmix_long_peaks.wav");
+    write_long_stereo_wav(&path, 240).unwrap();
+
+    let mut stream = DecodedStream::open(&path)?;
+    let start = std::time::Instant::now();
+    let peaks = compute_peaks(&mut stream, 2000)?;
+    let elapsed = start.elapsed();
+
+    std::fs::remove_file(&path).ok();
+
+    assert_eq!(peaks.len(), 2000, "one bucket per requested point");
+    for p in &peaks {
+        assert!(p.min <= 0.0 && p.min >= -0.6, "min {}", p.min);
+        assert!(p.max >= 0.0 && p.max <= 0.6, "max {}", p.max);
+    }
+    assert!(
+        peaks.iter().any(|p| p.max > 0.4),
+        "sine peaks should reach their amplitude"
+    );
+    assert!(
+        elapsed.as_secs() < 45,
+        "compute_peaks took {elapsed:?} on 240s of audio (O(n^2) bucket regression?)"
+    );
+    Ok(())
+}
